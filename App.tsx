@@ -192,8 +192,8 @@ const App = () => {
           <nav 
               className={`fixed top-0 left-0 w-full p-4 md:px-12 md:py-6 z-50 flex justify-between items-center transition-all duration-700 ${
                   isScrolled 
-                  ? 'bg-white/90 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 py-4 shadow-sm' 
-                  : 'bg-transparent py-6 md:py-8'
+                  ? 'bg-white/90 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 py-3 md:py-4 shadow-sm' 
+                  : 'bg-transparent py-4 md:py-8'
               }`}
           >
             <div className="flex flex-col cursor-pointer group interactive-hover" onClick={() => scrollToSection('hero')}>
@@ -206,15 +206,9 @@ const App = () => {
                 </div>
             </div>
 
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-4 md:gap-8">
               <ul className="hidden lg:flex items-center gap-8">
                   {['Início', 'Contagem', 'Login', 'Números', 'Missões'].map((item, idx) => {
-                      // Mapping names to IDs:
-                      // Início -> hero
-                      // Contagem -> countdown
-                      // Login -> missions (where ticket gen/login starts)
-                      // Números -> registry
-                      // Missões -> rules
                       const ids = ['hero', 'countdown', 'missions', 'registry', 'rules'];
                       return (
                           <li key={idx}>
@@ -249,7 +243,7 @@ const App = () => {
               id="hero"
               ref={heroRef}
               onMouseMove={handleHeroMouseMove}
-              className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden"
+              className="min-h-screen flex flex-col justify-center items-center relative overflow-hidden pt-20"
             >
                 {/* Optimized Gold Particles - New Layer */}
                 <GoldParticles />
@@ -360,7 +354,7 @@ const App = () => {
             </div>
 
             {/* Section 5: Rules & Missions */}
-            <section id="rules" className="py-32 px-6 md:px-20 bg-[#F0F0E8] dark:bg-[#080808] text-slate-900 dark:text-white relative overflow-hidden border-t border-slate-300 dark:border-white/10">
+            <section id="rules" className="py-20 md:py-32 px-6 md:px-20 bg-[#F0F0E8] dark:bg-[#080808] text-slate-900 dark:text-white relative overflow-hidden border-t border-slate-300 dark:border-white/10">
                 {/* Background: Blueprint Grid */}
                 <div className="absolute inset-0 pointer-events-none opacity-5 dark:opacity-20">
                     <div className="absolute inset-0" 
@@ -374,13 +368,13 @@ const App = () => {
                 </div>
 
                 <div className="max-w-7xl mx-auto relative z-10">
-                    <div className="flex flex-col md:flex-row justify-between items-end mb-20 pb-8 border-b border-slate-300 dark:border-white/10">
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-10 md:mb-20 pb-8 border-b border-slate-300 dark:border-white/10">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-500 animate-pulse"></span>
                                 <span className="text-[10px] uppercase tracking-[0.3em] text-amber-700 dark:text-amber-500">Documento Oficial</span>
                             </div>
-                            <h3 className="text-4xl md:text-5xl font-editorial text-slate-900 dark:text-white">Condições & Premiação</h3>
+                            <h3 className="text-3xl md:text-5xl font-editorial text-slate-900 dark:text-white">Condições & Premiação</h3>
                         </div>
                         <div className="text-right hidden md:block opacity-30">
                              <span className="block text-6xl font-mono font-bold text-slate-900/10 dark:text-white/5 tracking-tighter">OP-2026</span>
@@ -391,7 +385,7 @@ const App = () => {
                         
                         {/* Left Column: Timeline */}
                         <div className="lg:col-span-4 relative">
-                            <div className="sticky top-32">
+                            <div className="lg:sticky lg:top-32">
                                 <h4 className="text-sm font-bold uppercase tracking-[0.2em] mb-10 text-slate-500 dark:text-white/50 flex items-center gap-3">
                                     <span className="w-8 h-[1px] bg-slate-400 dark:bg-white/20"></span> Cronograma
                                 </h4>
@@ -533,9 +527,9 @@ const App = () => {
                 </div>
 
                 {/* Bottom Legal & Credits */}
-                <div className="w-full border-t border-slate-200 dark:border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase tracking-widest text-slate-400 dark:text-gray-600">
+                <div className="w-full border-t border-slate-200 dark:border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase tracking-widest text-slate-400 dark:text-gray-600 text-center">
                     <p>&copy; 2026 Revolução Contra o Crime. All rights reserved.</p>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 justify-center">
                         <span className="flex items-center gap-2">
                            Dev <span className="text-amber-600 dark:text-amber-500 font-bold">.Brendon</span>
                         </span>
