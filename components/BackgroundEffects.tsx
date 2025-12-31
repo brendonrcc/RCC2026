@@ -1,23 +1,25 @@
 import React from 'react';
 
-const BackgroundEffects = () => {
+const BackgroundEffects = ({ theme = 'dark' }) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const mouseRef = React.useRef({ x: 0, y: 0 });
 
   React.useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: true }); // Alpha true para fundo transparente
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     let width = window.innerWidth;
     let height = window.innerHeight;
     
-    // Configuração Otimizada
+    // Configuração Otimizada para reduzir Lag
     const isMobile = width < 768;
-    const PARTICLE_COUNT = isMobile ? 60 : 130; // Reduzido para mobile
-    const CONNECT_DISTANCE = isMobile ? 60 : 100;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2); // Limita DPR a 2x para economizar GPU
+    // Reduzido drasticamente para garantir 60fps
+    const PARTICLE_COUNT = isMobile ? 30 : 80; 
+    const CONNECT_DISTANCE = isMobile ? 50 : 100;
+    // Limitando DPR para evitar canvas gigante em telas Retina que causam lag
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
     canvas.width = width * dpr;
     canvas.height = height * dpr;
@@ -25,69 +27,50 @@ const BackgroundEffects = () => {
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
 
+    // Define colors based on theme
+    const isDark = theme === 'dark';
+    const baseColors = isDark 
+        ? ['#FFD700', '#D4AF37', '#B8860B']
+        : ['#94a3b8', '#64748b'];
+
     const particles: Particle[] = [];
 
     class Particle {
       x: number;
       y: number;
-      baseX: number;
-      baseY: number;
+      vx: number;
+      vy: number;
       size: number;
-      density: number;
       color: string;
-      alpha: number;
-      pulseSpeed: number;
 
       constructor() {
         this.x = Math.random() * width;
         this.y = Math.random() * height;
-        this.baseX = this.x;
-        this.baseY = this.y;
+        // Velocidade constante em vez de base/interação complexa para performance
+        this.vx = (Math.random() - 0.5) * 0.5; 
+        this.vy = (Math.random() - 0.5) * 0.5;
         this.size = Math.random() * 2 + 0.5;
-        this.density = (Math.random() * 30) + 1;
-        
-        const colors = ['#FFD700', '#FBF5B7', '#D4AF37', '#FFFFFF', '#B8860B'];
-        this.color = colors[Math.floor(Math.random() * colors.length)];
-        
-        this.alpha = Math.random() * 0.5 + 0.1;
-        this.pulseSpeed = 0.02;
+        this.color = baseColors[Math.floor(Math.random() * baseColors.length)];
       }
 
       draw() {
         if (!ctx) return;
-        ctx.globalAlpha = this.alpha;
         ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        // Rect é mais rápido que Arc para desenhar
+        ctx.rect(this.x, this.y, this.size, this.size);
         ctx.fill();
       }
 
       update() {
-        // Mouse Interaction Otimizada
-        const dx = mouseRef.current.x - this.x;
-        const dy = mouseRef.current.y - this.y;
-        
-        // Só calcula física se o mouse estiver perto (Otimização)
-        if (Math.abs(dx) < 200 && Math.abs(dy) < 200) {
-            const mouseNormX = (mouseRef.current.x / width) * 2 - 1;
-            const mouseNormY = (mouseRef.current.y / height) * 2 - 1;
-            const moveX = mouseNormX * this.density * 2; 
-            const moveY = mouseNormY * this.density * 2;
-            this.x += (this.baseX - moveX - this.x) * 0.05;
-            this.y += (this.baseY - moveY - this.y) * 0.05;
-        } else {
-             // Retorno suave à base se longe do mouse
-             if (Math.abs(this.x - this.baseX) > 0.1) this.x += (this.baseX - this.x) * 0.05;
-             if (Math.abs(this.y - this.baseY) > 0.1) this.y += (this.baseY - this.y) * 0.05;
-        }
+        this.x += this.vx;
+        this.y += this.vy;
 
-        // Twinkle effect
-        this.alpha += this.pulseSpeed;
-        if (this.alpha > 0.8 || this.alpha < 0.1) this.pulseSpeed = -this.pulseSpeed;
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
       }
     }
 
-    // Inicialização
     for (let i = 0; i < PARTICLE_COUNT; i++) {
         particles.push(new Particle());
     }
@@ -96,46 +79,46 @@ const BackgroundEffects = () => {
     const animate = () => {
       if (!ctx || !canvas) return;
       
-      // Clear Otimizado: Não redesenha gradiente, apenas limpa
       ctx.clearRect(0, 0, width, height);
-
-      // Batch draw lines (Otimização)
-      ctx.strokeStyle = '#D4AF37';
       ctx.lineWidth = 0.5;
       
-      // Loop Otimizado
-      for (let a = 0; a < particles.length; a++) {
-        const pA = particles[a];
+      // Otimização: Cachear strokeStyle
+      const strokeColor = isDark ? 'rgba(212, 175, 55, ' : 'rgba(148, 163, 184, ';
+
+      for (let i = 0; i < particles.length; i++) {
+        const pA = particles[i];
         pA.update();
         pA.draw();
 
-        // Linhas de conexão
-        for (let b = a + 1; b < particles.length; b++) {
-          const pB = particles[b];
-          // Check rápido de distância (Box check) antes da Raiz Quadrada (Cara)
-          if (Math.abs(pA.x - pB.x) > CONNECT_DISTANCE) continue; 
-          if (Math.abs(pA.y - pB.y) > CONNECT_DISTANCE) continue;
-
+        // Loop de conexão simplificado
+        // Só desenha conexões para os próximos vizinhos para evitar O(N^2) pesado
+        for (let j = i + 1; j < particles.length; j++) {
+          const pB = particles[j];
           const dx = pA.x - pB.x;
-          const dy = pA.y - pB.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+          // Verificação rápida de box antes de sqrt
+          if (Math.abs(dx) > CONNECT_DISTANCE) continue;
           
-          if (distance < CONNECT_DISTANCE) {
-            ctx.globalAlpha = 0.1 * (1 - distance / CONNECT_DISTANCE);
-            ctx.beginPath();
-            ctx.moveTo(pA.x, pA.y);
-            ctx.lineTo(pB.x, pB.y);
-            ctx.stroke();
+          const dy = pA.y - pB.y;
+          if (Math.abs(dy) > CONNECT_DISTANCE) continue;
+
+          const distanceSq = dx * dx + dy * dy;
+          const connDistSq = CONNECT_DISTANCE * CONNECT_DISTANCE;
+          
+          if (distanceSq < connDistSq) {
+            const alpha = 1 - (distanceSq / connDistSq);
+            // Evitar desenhar linhas muito transparentes
+            if (alpha > 0.05) {
+                ctx.strokeStyle = strokeColor + (alpha * 0.2) + ')';
+                ctx.beginPath();
+                ctx.moveTo(pA.x, pA.y);
+                ctx.lineTo(pB.x, pB.y);
+                ctx.stroke();
+            }
           }
         }
       }
 
       animationFrameId = requestAnimationFrame(animate);
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-        // Throttle simples: atualizar ref é barato, mas cálculos complexos ficam no animate
-        mouseRef.current = { x: e.clientX, y: e.clientY };
     };
 
     let resizeTimeout: ReturnType<typeof setTimeout>;
@@ -147,28 +130,23 @@ const BackgroundEffects = () => {
           canvas.width = width * dpr;
           canvas.height = height * dpr;
           ctx.scale(dpr, dpr);
-          canvas.style.width = `${width}px`;
-          canvas.style.height = `${height}px`;
           
-          const newCount = width < 768 ? 60 : 130;
+          const newCount = width < 768 ? 30 : 80;
           particles.length = 0;
           for (let i = 0; i < newCount; i++) particles.push(new Particle());
-      }, 200); // Debounce resize
+      }, 200);
     };
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener('mousemove', handleMouseMove);
     animate();
 
     return () => {
         window.removeEventListener('resize', handleResize);
-        window.removeEventListener('mousemove', handleMouseMove);
         cancelAnimationFrame(animationFrameId);
         clearTimeout(resizeTimeout);
     };
-  }, []);
+  }, [theme]);
 
-  // O gradiente vai para o CSS da div pai ou do body para evitar repaint no canvas
   return (
     <canvas 
       ref={canvasRef} 

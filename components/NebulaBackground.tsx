@@ -6,7 +6,7 @@ const NebulaBackground = () => {
   React.useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: false }); // Fundo opaco para performance (não limpa transparência)
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
     let width = canvas.offsetWidth;
@@ -18,67 +18,49 @@ const NebulaBackground = () => {
       if(canvas.parentElement) {
           width = canvas.parentElement.offsetWidth;
           height = canvas.parentElement.offsetHeight;
-          // Reduz resolução interna em telas muito grandes para performance
-          const dpr = Math.min(window.devicePixelRatio || 1, 1.5); 
+          const dpr = Math.min(window.devicePixelRatio || 1, 1); // Força 1.0 DPR para performance máxima na Nebula
           canvas.width = width * dpr;
           canvas.height = height * dpr;
           ctx.scale(dpr, dpr);
       }
     };
     
-    // Initial setup
     handleResize();
 
-    // Debounce resize
     let resizeTimer: ReturnType<typeof setTimeout>;
     const onResize = () => {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(handleResize, 200);
+        resizeTimer = setTimeout(handleResize, 500);
     };
     window.addEventListener('resize', onResize);
 
     const animate = () => {
-      time += 0.002;
+      time += 0.001; // Velocidade reduzida
       
-      // Em vez de clearRect, fillRect cobre o anterior (mais rápido em alguns browsers para fundo opaco)
-      // Deep Space Base
-      const gradient = ctx.createLinearGradient(0, 0, 0, height);
-      gradient.addColorStop(0, '#050200'); 
-      gradient.addColorStop(1, '#1a0f00'); 
-      ctx.fillStyle = gradient;
+      // Fundo sólido
+      ctx.fillStyle = '#050200';
       ctx.fillRect(0, 0, width, height);
 
-      // Liquid Gold Nebula Effect
       ctx.globalCompositeOperation = 'lighter';
       
-      // Reduzido para 3 camadas em vez de 4
-      for (let i = 1; i <= 3; i++) {
+      // Reduzido para 2 camadas apenas
+      for (let i = 1; i <= 2; i++) {
         ctx.beginPath();
-        const scale = i * 40;
+        const scale = i * 60;
         
-        // OTIMIZAÇÃO: Aumentar o passo de x (de 20 para 30 ou 40) reduz drasticamente os cálculos trigonométricos
-        for (let x = 0; x <= width + 50; x += 40) {
+        // Passo de 60px para reduzir vértices drasticamente
+        for (let x = 0; x <= width + 60; x += 60) {
            const y = height / 2 + 
-                     Math.sin(x / 300 + time * i) * scale + 
-                     Math.cos(x / 400 - time * 2) * (scale * 0.5);
+                     Math.sin(x / 400 + time * i) * scale;
            
            if (x === 0) ctx.moveTo(x, y);
            else ctx.lineTo(x, y);
         }
 
-        if (i % 2 === 0) {
-            ctx.strokeStyle = `rgba(212, 175, 55, 0.15)`; 
-            ctx.lineWidth = 40;
-        } else {
-            ctx.strokeStyle = `rgba(184, 134, 11, 0.1)`;
-            ctx.lineWidth = 60;
-        }
-        
+        ctx.strokeStyle = i === 1 ? `rgba(212, 175, 55, 0.08)` : `rgba(184, 134, 11, 0.05)`;
+        ctx.lineWidth = 80;
         ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        // Reduzir blur radius melhora performance
-        ctx.shadowBlur = 15; 
-        ctx.shadowColor = '#FFD700';
+        // Blur via shadow é caro, usando transparência direta
         ctx.stroke();
       }
 

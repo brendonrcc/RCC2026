@@ -1,6 +1,6 @@
 import React from 'react';
 
-const GridBackground = () => {
+const GridBackground = ({ theme = 'dark' }) => {
   const canvasRef = React.useRef(null);
   const mouseRef = React.useRef({ x: 0, y: 0 });
 
@@ -30,16 +30,16 @@ const GridBackground = () => {
     window.addEventListener('resize', handleResize);
     
     const gridSize = 40;
+    const isDark = theme === 'dark';
 
     let animationId;
 
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Background Dark
-      ctx.fillStyle = '#050505';
-      ctx.fillRect(0, 0, width, height);
-
+      // Background logic handled by CSS in parent, here just lines
+      // But we can lightly tint if needed, though clean is better.
+      
       const canvasRect = canvas.getBoundingClientRect();
       const relativeMouseY = mouseRef.current.y - canvasRect.top;
 
@@ -48,19 +48,22 @@ const GridBackground = () => {
       // Draw Grid
       for (let x = 0; x <= width; x += gridSize) {
         for (let y = 0; y <= height; y += gridSize) {
-           // Calculate distance to mouse
            const dx = x - mouseRef.current.x;
            const dy = y - relativeMouseY;
            const dist = Math.sqrt(dx * dx + dy * dy);
            
-           let alpha = 0.05; // Base visibility
+           let alpha = 0.05; 
            
-           // Highlight near mouse
            if (dist < 150) {
                alpha = 0.4 * (1 - dist / 150);
            }
 
-           ctx.strokeStyle = `rgba(212, 175, 55, ${alpha})`; // Gold color lines
+           // Color logic: Gold in dark mode, Dark Grey in light mode
+           if (isDark) {
+               ctx.strokeStyle = `rgba(212, 175, 55, ${alpha})`;
+           } else {
+               ctx.strokeStyle = `rgba(50, 50, 50, ${alpha * 1.5})`; // Slightly stronger in light mode
+           }
            
            // Draw horizontal segment
            ctx.beginPath();
@@ -76,7 +79,7 @@ const GridBackground = () => {
 
            // Small cross at intersection if close to mouse
            if (dist < 100) {
-               ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 2})`;
+               ctx.fillStyle = isDark ? `rgba(255, 255, 255, ${alpha * 2})` : `rgba(212, 175, 55, ${alpha * 2})`;
                ctx.fillRect(x - 1, y - 1, 2, 2);
            }
         }
@@ -97,7 +100,7 @@ const GridBackground = () => {
         window.removeEventListener('mousemove', handleMouseMove);
         cancelAnimationFrame(animationId);
     };
-  }, []);
+  }, [theme]); // Re-run when theme changes
 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
 };

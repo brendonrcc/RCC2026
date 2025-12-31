@@ -3,6 +3,7 @@ import Skeleton from './Skeleton';
 import NumberSelector from './NumberSelector';
 import { generateVerificationCode, verifyHabboMission } from '../services/habboService';
 import { submitMissionToSheet, fetchDashboardData } from '../services/sheetService';
+import { useSound } from '../hooks/useSound';
 
 // --- SVG ICONS ---
 const Icons = {
@@ -15,10 +16,10 @@ const Icons = {
   Refresh: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
   Logout: () => <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>,
   ChevronDown: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" /></svg>,
-  Fingerprint: () => <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.2-2.85.577-4.147l.156-.463c.615-1.817 1.88-3.35 3.523-4.226 1.436-.766 3.043-1.077 4.634-.897M6 21a21.974 21.974 0 01-1-4.5" /></svg>
+  Diamond: () => <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 2L2 12l10 10 10-10L12 2z" /></svg>
 };
 
-const RCC_LOGO_URL = "https://i.imgur.com/YhONB12.jpeg";
+const RCC_LOGO_URL = "https://i.imgur.com/EgxhzBS.png";
 
 const MISSION_MAP = {
     1: "1 Hora em Função",
@@ -50,7 +51,7 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
   const [takenNumbers, setTakenNumbers] = React.useState(new Set());
   const [userHistory, setUserHistory] = React.useState([]);
   const [loadingData, setLoadingData] = React.useState(false);
-  const [refreshStatus, setRefreshStatus] = React.useState('idle');
+  const { playWhoosh, playChime, playClick } = useSound();
   
   const [missions, setMissions] = React.useState<Mission[]>([
     { id: 1, title: MISSION_MAP[1], desc: '1h em Função', status: 'PENDING', chosenNumber: '', proofLink: '' },
@@ -60,6 +61,7 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
   const [activeMissionId, setActiveMissionId] = React.useState(null);
 
   const changeStage = (newStage) => {
+    playWhoosh();
     setIsTransitioning(true);
     setTimeout(() => {
         setStage(newStage);
@@ -90,9 +92,7 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
     if (!nickname) return;
     if (onGlobalRefresh) onGlobalRefresh();
     setLoadingData(true);
-    setRefreshStatus('idle');
 
-    // Usando a nova função otimizada
     fetchDashboardData(nickname).then((data) => {
         setTakenNumbers(data.blockedNumbers);
         const historyInSheetOrder = [...data.userHistory];
@@ -113,8 +113,6 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
 
         setUserHistory([...historyInSheetOrder].reverse());
         setLoadingData(false);
-        setRefreshStatus('success');
-        setTimeout(() => setRefreshStatus('idle'), 2000);
     });
   }, [nickname, onGlobalRefresh]);
 
@@ -124,6 +122,7 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
 
   const handleStartVerification = () => {
     if (!nickname.trim()) return;
+    playClick();
     const code = generateVerificationCode();
     setVerificationCode(code);
     setVerifyError(null);
@@ -136,11 +135,13 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
   };
 
   const handleVerifyMission = async () => {
+    playClick();
     setVerifying(true);
     setVerifyError(null);
     try {
       const result = await verifyHabboMission(nickname, verificationCode);
       if (result.success) {
+        playChime();
         saveSession(nickname);
         changeStage('DASHBOARD');
       } else {
@@ -154,6 +155,7 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
   };
 
   const handleLogout = () => {
+      playClick();
       localStorage.removeItem('rcc_mega_session');
       setNickname('');
       changeStage('LOGIN');
@@ -168,11 +170,13 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
     if (isNaN(num) || mission.chosenNumber === '') { alert("Por favor, selecione um número na tabela."); return; }
     if (takenNumbers.has(num)) { alert("Este número consta como OCUPADO. Por favor, escolha outro."); refreshData(); return; }
     if (!mission.proofLink || mission.proofLink.length < 5) { alert("Link de comprovação inválido."); return; }
-
+    
+    playClick();
     setMissions(prev => prev.map(m => m.id === id ? { ...m, status: 'SUBMITTING' } : m));
     const result = await submitMissionToSheet({ nickname: nickname, missionId: id, chosenNumber: num, proofLink: mission.proofLink });
 
     if (result.success) {
+        playChime();
         alert(`Missão enviada! A tabela será atualizada em instantes.`);
         setActiveMissionId(null);
         setTimeout(() => refreshData(), 3000);
@@ -186,121 +190,117 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
     setMissions(prev => prev.map(m => m.id !== id ? m : { ...m, [field]: value }));
   };
 
-  // --- ICONIC LOGIN ---
+  // --- LUXURY LOGIN (THE CLOCK/GALA INVITATION) ---
   const renderLogin = () => (
-    <div className="w-full max-w-md mx-auto flex items-center justify-center min-h-[50vh] animate-in fade-in slide-in-from-bottom-8 duration-700">
-         <div className="w-full relative group perspective-1000">
-            {/* Holographic Border Container */}
-            <div className="relative bg-[#050505]/90 border-t border-b border-amber-500/20 backdrop-blur-xl p-1 overflow-hidden shadow-[0_0_100px_rgba(212,175,55,0.15)] group-hover:shadow-[0_0_150px_rgba(212,175,55,0.25)] transition-all duration-700 transform hover:scale-[1.02]">
-                
-                {/* Scanner Light Effect */}
-                <div className="absolute top-0 left-0 w-full h-[2px] bg-amber-500 shadow-[0_0_20px_#FFD700] animate-[scan_3s_ease-in-out_infinite] opacity-50 z-20 pointer-events-none"></div>
+    <div className="w-full max-w-4xl mx-auto flex items-center justify-center min-h-[60vh] animate-in fade-in slide-in-from-bottom-8 duration-700 px-4">
+         <div className="w-full relative group perspective-1000 flex flex-col md:flex-row shadow-2xl rounded-xl md:rounded-3xl overflow-hidden bg-white dark:bg-[#0a0a0a]">
+            
+            {/* Left Side: The Visual (Clock Concept) - Hidden on Mobile to save space */}
+            <div className="hidden md:flex relative w-1/2 min-h-full bg-[#f3f3f3] dark:bg-black overflow-hidden items-center justify-center border-r border-slate-200 dark:border-white/5">
+                 {/* Decorative Circle */}
+                 <div className="absolute inset-0 border-[20px] border-[#e5e5e5] dark:border-[#151515] rounded-full scale-150"></div>
+                 <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/10 to-transparent"></div>
+                 
+                 {/* Rotating Elements */}
+                 <div className="w-64 h-64 border border-amber-500/30 rounded-full flex items-center justify-center relative animate-[spin_60s_linear_infinite]">
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-amber-500 rounded-full"></div>
+                 </div>
+                 <div className="absolute w-48 h-48 border border-slate-300 dark:border-white/10 rounded-full animate-[spin_40s_linear_infinite_reverse]"></div>
 
-                <div className="bg-black/80 p-10 relative z-10 flex flex-col items-center">
-                    
-                    {/* Iconic Fingerprint/Logo */}
-                    <div className="mb-10 relative interactive-hover">
-                         <div className="w-32 h-32 border border-amber-500/30 rounded-full flex items-center justify-center relative bg-black/50 overflow-hidden shadow-[0_0_30px_rgba(212,175,55,0.1)]">
-                             {/* Circular Scan Effect */}
-                             <div className="absolute inset-0 border-t-2 border-amber-500 rounded-full animate-spin"></div>
-                             
-                             <img 
-                                src={RCC_LOGO_URL} 
-                                alt="RCC System Access" 
-                                className="w-24 h-24 object-contain opacity-90 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"
-                             />
-                             
-                             {/* Laser Scanner Overlay */}
-                             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-amber-500/10 to-transparent animate-[scan_2s_linear_infinite] pointer-events-none"></div>
-                         </div>
-                    </div>
-
-                    <h2 className="text-3xl font-editorial text-white tracking-[0.2em] mb-2 text-center text-gold-shimmer">RCC <span className="text-amber-500">LOG</span></h2>
-                    <p className="text-[9px] uppercase tracking-[0.4em] text-gray-500 mb-8 border-b border-amber-500/20 pb-2">Acesso Restrito</p>
-
-                    <div className="w-full space-y-8 relative">
-                         {/* Input with Side Markers */}
-                        <div className="relative group/input interactive-hover">
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-amber-500/50 transition-all group-focus-within/input:h-full group-focus-within/input:bg-amber-500"></div>
-                            <input
-                                type="text"
-                                value={nickname}
-                                onChange={(e) => setNickname(e.target.value)}
-                                className="block w-full py-4 px-6 bg-white/[0.02] border-r border-white/10 text-center text-xl text-white focus:bg-white/[0.05] outline-none transition-all font-mono uppercase tracking-[0.2em] placeholder-gray-700 focus:shadow-[inset_0_0_20px_rgba(212,175,55,0.1)]"
-                                placeholder="IDENTIFICAÇÃO"
-                            />
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-amber-500/50 transition-all group-focus-within/input:h-full group-focus-within/input:bg-amber-500"></div>
-                        </div>
-
-                        <button
-                            onClick={handleStartVerification}
-                            disabled={!nickname.trim()}
-                            className="w-full relative overflow-hidden bg-amber-600 hover:bg-amber-500 text-black font-bold uppercase text-xs py-5 tracking-[0.3em] transition-all shadow-[0_0_30px_rgba(212,175,55,0.2)] disabled:opacity-30 disabled:cursor-not-allowed group/btn interactive-hover"
-                        >
-                            <span className="relative z-10 flex items-center justify-center gap-2">
-                                Autenticar <Icons.ArrowRight />
-                            </span>
-                            {/* Button Hover Shine */}
-                            <div className="absolute top-0 left-0 w-full h-full bg-white/40 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-500 ease-out skew-x-12"></div>
-                        </button>
-                    </div>
-                </div>
+                 <div className="relative z-10 flex flex-col items-center">
+                     <span className="text-8xl font-editorial text-slate-800 dark:text-white font-bold tracking-tighter mix-blend-overlay">20</span>
+                     <span className="text-8xl font-editorial text-amber-500 font-bold tracking-tighter -mt-6 drop-shadow-sm">26</span>
+                 </div>
             </div>
+
+            {/* Right Side: The Invite Form */}
+            <div className="relative w-full md:w-1/2 p-8 md:p-14 flex flex-col justify-center bg-white dark:bg-[#0a0a0a]">
+                <div className="mb-10 text-center">
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-amber-600 dark:text-amber-500 mb-2">Convite Oficial</p>
+                    <h2 className="text-3xl font-editorial text-slate-900 dark:text-white">Confirme sua Presença</h2>
+                    <div className="w-10 h-[1px] bg-amber-500 mx-auto mt-4"></div>
+                </div>
+
+                <div className="space-y-8">
+                     <div className="relative group/input">
+                         <input
+                             type="text"
+                             value={nickname}
+                             onChange={(e) => setNickname(e.target.value)}
+                             className="block w-full py-4 bg-transparent border-b border-slate-300 dark:border-white/20 text-center text-xl text-slate-800 dark:text-white focus:border-amber-500 outline-none transition-all font-editorial placeholder-slate-400 dark:placeholder-gray-700"
+                             placeholder="Seu Nome Habbo"
+                         />
+                     </div>
+
+                     <button
+                         onClick={handleStartVerification}
+                         disabled={!nickname.trim()}
+                         className="w-full bg-slate-900 dark:bg-white text-white dark:text-black hover:bg-amber-700 dark:hover:bg-amber-400 font-bold uppercase text-xs py-5 tracking-[0.3em] transition-all disabled:opacity-30 disabled:cursor-not-allowed group/btn shadow-lg"
+                     >
+                         <span className="relative z-10 flex items-center justify-center gap-2">
+                             Acessar Salão <Icons.ArrowRight />
+                         </span>
+                     </button>
+                </div>
+                
+                <p className="mt-8 text-center text-[10px] text-slate-400 dark:text-gray-600 uppercase tracking-wider">RCC System Secured</p>
+            </div>
+
          </div>
     </div>
   );
 
-  // --- ICONIC VERIFICATION ---
+  // --- LUXURY VERIFICATION (THE GOLDEN TICKET) ---
   const renderVerify = () => (
-    <div className="w-full max-w-md mx-auto animate-in fade-in zoom-in-95 duration-500">
-        <div className="bg-[#050505] border-l-2 border-r-2 border-amber-500/40 p-1 relative shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+    <div className="w-full max-w-md mx-auto animate-in fade-in zoom-in-95 duration-500 px-4">
+        <div className="bg-white dark:bg-[#050505] p-1 relative shadow-2xl rounded-sm border-t-4 border-amber-500">
             
-            {/* Header */}
-            <div className="bg-black/90 p-8 text-center border-b border-white/5">
-                <h2 className="text-xs text-amber-500 uppercase tracking-[0.4em] mb-2 animate-pulse">Protocolo de Segurança</h2>
-                <h1 className="text-3xl text-white font-editorial tracking-widest text-gold-shimmer">VERIFICAÇÃO</h1>
-            </div>
+            {/* Content Area */}
+            <div className="p-8 md:p-12 text-center border border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-[#080808]">
+                <div className="w-12 h-12 mx-auto mb-6 text-amber-500 border border-amber-500 rounded-full flex items-center justify-center">
+                    <Icons.Lock />
+                </div>
 
-            <div className="p-8 space-y-8 bg-black/60 backdrop-blur-md">
-                {/* The Code Vault */}
+                <h2 className="text-xs text-slate-500 dark:text-gray-400 uppercase tracking-[0.3em] mb-2">Código de Validação</h2>
+                <h1 className="text-3xl font-editorial text-slate-900 dark:text-white mb-8">Liberar Acesso</h1>
+
+                {/* The Golden Ticket Code */}
                 <div 
-                    className="relative bg-gradient-to-r from-amber-900/20 to-black border border-amber-500/30 p-8 text-center cursor-pointer group hover:border-amber-500 transition-colors interactive-hover"
-                    onClick={() => {navigator.clipboard.writeText(verificationCode); alert('Token copiado!');}}
+                    className="relative bg-gradient-to-r from-amber-100 to-amber-200 dark:from-amber-900/20 dark:to-black border border-amber-300 dark:border-amber-500/30 p-6 mb-8 cursor-pointer group hover:scale-[1.02] transition-transform"
+                    onClick={() => {navigator.clipboard.writeText(verificationCode); alert('Código copiado!');}}
                 >
-                    <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-amber-500"></div>
-                    <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-amber-500"></div>
-                    <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-amber-500"></div>
-                    <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-amber-500"></div>
+                    {/* Corner Cuts */}
+                    <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-slate-50 dark:bg-[#080808] rounded-full border-r border-amber-300 dark:border-amber-500/30"></div>
+                    <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-slate-50 dark:bg-[#080808] rounded-full border-l border-amber-300 dark:border-amber-500/30"></div>
 
-                    <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-4">Token Gerado</p>
-                    <div className="text-4xl md:text-5xl font-mono text-white tracking-widest font-bold group-hover:text-amber-400 transition-colors drop-shadow-[0_0_15px_rgba(212,175,55,0.5)]">
+                    <p className="text-[9px] text-amber-800 dark:text-amber-500 uppercase tracking-widest mb-2">Ticket Nº</p>
+                    <div className="text-4xl font-mono text-amber-900 dark:text-white font-bold tracking-widest group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">
                         {verificationCode}
                     </div>
-                    <div className="mt-4 flex items-center justify-center gap-2 text-[9px] text-amber-600 uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity">
-                         [ COPIAR ] <Icons.Copy />
+                    <div className="mt-2 text-[8px] text-amber-800/60 dark:text-gray-500 uppercase flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                         Clique para copiar <Icons.Copy />
                     </div>
                 </div>
                 
                 {verifyError && (
-                     <div className="p-4 bg-red-950/30 border-l-2 border-red-500 text-center animate-in shake">
-                         <p className="text-red-500 text-xs uppercase tracking-wide font-bold animate-pulse">{verifyError}</p>
+                     <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-500/30 rounded">
+                         <p className="text-red-600 dark:text-red-400 text-xs font-bold animate-pulse">{verifyError}</p>
                      </div>
                 )}
 
-                <div className="flex gap-4">
-                    <button 
-                        onClick={handleCancelVerification}
-                        className="flex-1 bg-transparent border border-white/10 hover:bg-white/5 text-gray-400 text-[10px] uppercase tracking-widest py-4 transition-colors interactive-hover"
-                    >
-                        Cancelar
-                    </button>
+                <div className="flex flex-col gap-3">
                     <button 
                         onClick={handleVerifyMission} 
                         disabled={verifying} 
-                        className="flex-[2] bg-white hover:bg-gray-200 text-black font-bold uppercase text-[10px] py-4 tracking-[0.3em] transition-all flex items-center justify-center gap-2 interactive-hover relative overflow-hidden"
+                        className="w-full bg-slate-900 dark:bg-white hover:bg-amber-700 dark:hover:bg-amber-400 text-white dark:text-black font-bold uppercase text-[10px] py-4 tracking-[0.3em] transition-all flex items-center justify-center gap-2 shadow-lg"
                     >
-                        <span className="relative z-10">{verifying ? 'Validando...' : 'Confirmar'}</span>
-                        {verifying && <div className="absolute inset-0 bg-amber-500/20 animate-pulse"></div>}
+                        <span>{verifying ? 'Validando...' : 'Confirmar Missão'}</span>
+                    </button>
+                    <button 
+                        onClick={handleCancelVerification}
+                        className="text-slate-500 dark:text-gray-600 text-[10px] uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-colors"
+                    >
+                        Cancelar
                     </button>
                 </div>
             </div>
@@ -308,39 +308,34 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
     </div>
   );
 
-  // --- ICONIC DASHBOARD ---
+  // --- DASHBOARD (Refined) ---
   const renderDashboard = () => {
     return (
         <div className="w-full max-w-7xl mx-auto px-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
             
-            {/* Tactical HUD Header */}
+            {/* Header Profile */}
             <div className="relative mb-16">
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent blur-3xl pointer-events-none"></div>
-                <div className="relative bg-black/40 backdrop-blur-xl border-t border-b border-white/10 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-300 dark:border-white/10 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
                     
                     <div className="flex items-center gap-8">
-                         {/* Avatar with Rotating Ring */}
-                         <div className="relative w-20 h-20 flex-shrink-0 interactive-hover group">
-                            <div className="absolute inset-0 rounded-full border border-dashed border-amber-500/50 animate-[spin_10s_linear_infinite] group-hover:border-amber-400"></div>
-                            <div className="absolute inset-1 rounded-full border border-white/10"></div>
+                         <div className="relative w-20 h-20 flex-shrink-0">
+                            <div className="absolute inset-0 rounded-full border border-dashed border-amber-500/50 animate-[spin_10s_linear_infinite]"></div>
                             <img 
                                 src={`https://www.habbo.com.br/habbo-imaging/avatarimage?user=${nickname}&direction=2&head_direction=3&gesture=sml&size=l&headonly=1`} 
                                 alt={nickname}
-                                className="w-full h-full rounded-full object-cover p-2 transition-transform group-hover:scale-110"
+                                className="w-full h-full rounded-full object-cover p-2"
                              />
-                             {/* Small RCC Logo Badge */}
-                             <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full border border-black bg-black p-0.5 shadow-lg">
+                             <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-slate-900 dark:bg-black p-0.5 border border-amber-500">
                                 <img src={RCC_LOGO_URL} alt="Badge" className="w-full h-full object-contain" />
                              </div>
                          </div>
                          
                          <div>
-                            <h2 className="text-4xl font-editorial text-white tracking-wide drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">{nickname}</h2>
-                            <div className="flex items-center gap-3 mt-2">
-                                <div className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded text-[9px] text-amber-500 uppercase tracking-widest font-bold animate-pulse">
-                                    FELIZ ANO NOVO
-                                </div>
-                                <div className="h-[1px] w-12 bg-white/10"></div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-amber-700 dark:text-amber-500 uppercase tracking-widest font-bold mb-1">
+                                    Sua Jornada para 2026
+                                </span>
+                                <h2 className="text-3xl font-editorial text-slate-900 dark:text-white tracking-wide">{nickname}</h2>
                             </div>
                          </div>
                     </div>
@@ -349,46 +344,40 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
                         <button 
                             onClick={refreshData} 
                             disabled={loadingData}
-                            className="group relative px-6 py-3 overflow-hidden border border-white/10 hover:border-amber-500/50 transition-colors interactive-hover"
+                            className="px-6 py-3 border border-slate-300 dark:border-white/10 hover:border-amber-500 hover:text-amber-700 dark:hover:text-amber-500 text-slate-700 dark:text-white transition-colors text-[10px] uppercase tracking-widest flex items-center gap-2 rounded"
                         >
-                            <span className="relative z-10 text-[10px] uppercase tracking-[0.2em] text-white flex items-center gap-2">
-                                <Icons.Refresh /> {loadingData ? 'Sincronizando...' : 'Sincronizar'}
-                            </span>
-                            <div className="absolute bottom-0 left-0 w-full h-[1px] bg-amber-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
+                            <Icons.Refresh /> {loadingData ? 'Sincronizando...' : 'Atualizar'}
                         </button>
 
-                        <button onClick={handleLogout} className="text-[10px] uppercase tracking-[0.2em] text-red-500 hover:text-red-400 px-6 py-3 border border-transparent hover:border-red-900/30 transition-all interactive-hover">
-                            Encerrar Sessão
+                        <button onClick={handleLogout} className="px-6 py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors text-[10px] uppercase tracking-widest rounded border border-transparent hover:border-red-200 dark:hover:border-red-800">
+                            Sair
                         </button>
                     </div>
                 </div>
             </div>
 
-            {/* Mission Files Grid - IMPROVED CARDS */}
+            {/* Mission Files Grid - CARD REDESIGN */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {loadingData && missions.every(m => m.status === 'PENDING') ? (
                      [1, 2, 3].map((i) => <Skeleton key={i} className="h-96 w-full opacity-10" />)
                 ) : (
                     missions.map((mission) => {
-                        let statusColor = 'text-gray-500';
-                        let borderColor = 'border-white/5';
-                        let glow = '';
-                        let statusBg = 'bg-black/50';
+                        let statusColor = 'text-slate-500 dark:text-gray-500';
+                        let borderColor = 'border-slate-300 dark:border-white/10';
+                        let statusBg = 'bg-slate-100 dark:bg-black/50';
                         
                         if (mission.status === 'REJECTED') {
-                            statusColor = 'text-red-500';
-                            borderColor = 'border-red-900';
-                            statusBg = 'bg-red-900/20';
+                            statusColor = 'text-red-600 dark:text-red-500';
+                            borderColor = 'border-red-300 dark:border-red-900';
+                            statusBg = 'bg-red-50 dark:bg-red-900/20';
                         } else if (mission.status === 'COMPLETED') {
-                            statusColor = 'text-green-500';
-                            borderColor = 'border-green-900';
-                            glow = 'shadow-[0_0_30px_rgba(20,83,45,0.2)]';
-                            statusBg = 'bg-green-900/20';
+                            statusColor = 'text-green-700 dark:text-green-500';
+                            borderColor = 'border-green-300 dark:border-green-900';
+                            statusBg = 'bg-green-50 dark:bg-green-900/20';
                         } else if (mission.status === 'LOCKED') { 
-                            statusColor = 'text-amber-500';
-                            borderColor = 'border-amber-500/50';
-                            glow = 'shadow-[0_0_30px_rgba(212,175,55,0.15)]';
-                            statusBg = 'bg-amber-900/20';
+                            statusColor = 'text-amber-700 dark:text-amber-500';
+                            borderColor = 'border-amber-300 dark:border-amber-500/50';
+                            statusBg = 'bg-amber-50 dark:bg-amber-900/20';
                         }
 
                         const isOpen = activeMissionId === mission.id;
@@ -398,39 +387,39 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
                             <div 
                                 key={mission.id} 
                                 className={`
-                                    relative bg-[#080808]/80 backdrop-blur-xl border ${borderColor} transition-all duration-500 flex flex-col group interactive-hover
-                                    ${isOpen ? 'lg:col-span-3 z-20 min-h-[500px]' : 'min-h-[300px] hover:border-amber-500/30 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(0,0,0,0.8)]'}
-                                    ${glow}
-                                    overflow-hidden
+                                    relative bg-white dark:bg-[#111] backdrop-blur-xl border ${borderColor} transition-all duration-500 flex flex-col group
+                                    ${isOpen ? 'lg:col-span-3 z-20 min-h-[500px] shadow-2xl' : 'min-h-[350px] hover:-translate-y-2 shadow-lg dark:shadow-none hover:shadow-xl'}
+                                    rounded-sm overflow-hidden
                                 `}
                             >
-                                {/* Holographic Tech Pattern Overlay */}
-                                <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/circuit.png')]"></div>
-                                
-                                {/* Corner Accents */}
-                                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/20 group-hover:border-amber-500 transition-colors"></div>
-                                <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/20 group-hover:border-amber-500 transition-colors"></div>
-                                <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/20 group-hover:border-amber-500 transition-colors"></div>
-                                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/20 group-hover:border-amber-500 transition-colors"></div>
+                                {/* Decorative Corner Accents for "Gala Ticket" feel */}
+                                <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-amber-500/30"></div>
+                                <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-amber-500/30"></div>
+                                <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-amber-500/30"></div>
+                                <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-amber-500/30"></div>
 
                                 <div className="p-8 flex flex-col h-full relative z-10">
                                     <div className="flex justify-between items-start mb-8">
                                         <div className="flex flex-col">
-                                            <span className="text-[9px] uppercase tracking-widest text-gray-600 mb-1 group-hover:text-amber-500 transition-colors">Arquivo 00{mission.id}</span>
-                                            <h3 className="text-xl md:text-2xl text-white font-editorial tracking-wide group-hover:text-gold-shimmer transition-colors">{mission.title}</h3>
+                                            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-gray-500 mb-2">Evento 00{mission.id}</span>
+                                            <h3 className="text-2xl md:text-3xl text-slate-900 dark:text-white font-editorial tracking-wide leading-none">{mission.title}</h3>
                                         </div>
-                                        <div className={`px-2 py-1 text-[8px] uppercase tracking-[0.2em] font-bold border ${borderColor} ${statusColor} ${statusBg} rounded`}>
+                                        <div className={`px-3 py-1 text-[9px] uppercase tracking-[0.2em] font-bold border ${borderColor} ${statusColor} ${statusBg} rounded`}>
                                             {mission.statusLabel || 'Pendente'}
                                         </div>
                                     </div>
 
-                                    <p className="text-sm text-gray-400 font-light mb-8 border-l border-white/10 pl-4 group-hover:border-amber-500/50 transition-colors">{mission.desc}</p>
+                                    <div className="flex-grow flex items-center">
+                                        <p className="text-sm text-slate-600 dark:text-gray-300 font-light border-l-2 border-amber-500/30 pl-4 leading-relaxed max-w-md">
+                                            {mission.desc}
+                                        </p>
+                                    </div>
 
-                                    <div className="mt-auto flex justify-between items-end">
+                                    <div className="mt-8 pt-8 border-t border-slate-200 dark:border-white/5 flex justify-between items-end">
                                         <div>
-                                            <p className="text-[9px] text-gray-600 uppercase tracking-widest mb-2">Protocolo Nº</p>
-                                            <div className="h-10 px-4 flex items-center bg-white/5 border border-white/5 min-w-[100px] group-hover:bg-white/10 transition-colors">
-                                                <span className={`font-mono text-lg ${mission.chosenNumber ? 'text-amber-500' : 'text-gray-600'}`}>
+                                            <p className="text-[9px] text-slate-500 dark:text-gray-500 uppercase tracking-widest mb-2">Número da Sorte</p>
+                                            <div className="h-12 px-6 flex items-center justify-center bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 min-w-[120px] rounded">
+                                                <span className={`font-mono text-xl font-bold ${mission.chosenNumber ? 'text-amber-600 dark:text-amber-500' : 'text-slate-400 dark:text-gray-600'}`}>
                                                     {mission.chosenNumber ? `#${mission.chosenNumber}` : '---'}
                                                 </span>
                                             </div>
@@ -438,57 +427,57 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
                                         
                                         {canInteract && (
                                             <button 
-                                                onClick={() => setActiveMissionId(isOpen ? null : mission.id)}
-                                                className={`w-10 h-10 border flex items-center justify-center transition-all rounded-full ${isOpen ? 'bg-amber-500 border-amber-500 text-black rotate-180' : 'border-white/10 text-gray-400 hover:text-white hover:border-amber-500 hover:bg-amber-500/10'}`}
+                                                onClick={() => { playClick(); setActiveMissionId(isOpen ? null : mission.id); }}
+                                                className={`w-12 h-12 border flex items-center justify-center transition-all rounded-full ${isOpen ? 'bg-amber-600 dark:bg-amber-500 border-amber-600 dark:border-amber-500 text-white rotate-180 shadow-lg' : 'border-slate-300 dark:border-white/20 text-slate-400 dark:text-gray-400 hover:text-amber-700 dark:hover:text-white hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10'}`}
                                             >
                                                 <Icons.ChevronDown />
                                             </button>
                                         )}
                                     </div>
 
-                                    {/* SMOOTH ACCORDION EXPANSION */}
-                                    <div className={`grid transition-[grid-template-rows] duration-500 ease-out ${isOpen && canInteract ? 'grid-rows-[1fr] mt-8 pt-8 border-t border-white/5' : 'grid-rows-[0fr]'}`}>
+                                    {/* EXPANSION */}
+                                    <div className={`grid transition-[grid-template-rows] duration-500 ease-out ${isOpen && canInteract ? 'grid-rows-[1fr] mt-8 pt-8 border-t border-slate-200 dark:border-white/10' : 'grid-rows-[0fr]'}`}>
                                         <div className="overflow-hidden">
-                                            <div className="grid lg:grid-cols-2 gap-16 animate-in fade-in slide-in-from-top-2 duration-500">
+                                            <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-top-2 duration-500">
                                                 
-                                                {/* Left: Matrix Selection */}
-                                                <div>
+                                                {/* Number Selector - Full Width */}
+                                                <div className="w-full">
                                                     <NumberSelector 
                                                         takenNumbers={takenNumbers} 
                                                         selectedNumber={mission.chosenNumber} 
-                                                        onSelect={(n) => updateMissionField(mission.id, 'chosenNumber', n)} 
+                                                        onSelect={(n) => { playClick(); updateMissionField(mission.id, 'chosenNumber', n); }} 
                                                         loading={loadingData} 
                                                     />
                                                 </div>
 
-                                                {/* Right: Data Submission */}
-                                                <div className="flex flex-col justify-center space-y-8 p-6 bg-white/[0.02] border border-white/5 rounded-xl">
+                                                {/* Submission Form - Below */}
+                                                <div className="flex flex-col justify-center space-y-8 p-8 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
                                                     <div>
-                                                        <h4 className="text-xs text-white uppercase tracking-[0.2em] mb-6 font-bold flex items-center gap-2 border-b border-white/10 pb-2">
-                                                            <Icons.Lock /> Comprovações
+                                                        <h4 className="text-xs text-slate-900 dark:text-white uppercase tracking-[0.2em] mb-6 font-bold flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-4">
+                                                            <Icons.Lock /> Comprovações de Missão
                                                         </h4>
                                                         
-                                                        <div className="relative group/input mb-2">
+                                                        <div className="relative group/input mb-4">
                                                             <input 
                                                                 type="text"
-                                                                placeholder="URL DA IMAGEM (IMGUR)..."
+                                                                placeholder="COLE A URL DO IMGUR AQUI..."
                                                                 value={mission.proofLink}
                                                                 onChange={(e) => updateMissionField(mission.id, 'proofLink', e.target.value)}
-                                                                className="w-full bg-black/50 border border-white/10 px-6 py-4 text-white text-xs font-mono focus:border-amber-500 outline-none transition-colors placeholder-gray-700"
+                                                                className="w-full bg-white dark:bg-black/50 border border-slate-300 dark:border-white/10 px-6 py-5 text-slate-900 dark:text-white text-sm font-mono focus:border-amber-500 outline-none transition-colors placeholder-slate-400 dark:placeholder-gray-700 rounded-lg"
                                                             />
                                                         </div>
-                                                        <p className="text-[9px] text-gray-500">
-                                                            * O registro deve conter data, hora e o cumprimento explícito da missão.
+                                                        <p className="text-[10px] text-slate-500 dark:text-gray-500 leading-relaxed">
+                                                            * Certifique-se que o link da imagem está público e legível. Registros inválidos serão anulados. A validação é manual.
                                                         </p>
                                                     </div>
 
                                                     <button 
                                                         onClick={() => handleSubmitMission(mission.id)}
                                                         disabled={mission.status === 'SUBMITTING'}
-                                                        className="w-full bg-white hover:bg-amber-500 hover:text-black text-black font-bold uppercase text-xs py-5 tracking-[0.3em] transition-all flex justify-center gap-2 items-center interactive-hover shadow-lg"
+                                                        className="w-full bg-slate-900 dark:bg-white hover:bg-amber-700 dark:hover:bg-amber-500 hover:text-white dark:hover:text-black text-white dark:text-black font-bold uppercase text-xs py-5 tracking-[0.3em] transition-all flex justify-center gap-2 items-center shadow-lg rounded-lg"
                                                     >
                                                         {mission.status === 'SUBMITTING' ? 'Processando...' : (
-                                                            <>Enviar <Icons.ArrowRight /></>
+                                                            <>Enviar Registro <Icons.ArrowRight /></>
                                                         )}
                                                     </button>
                                                 </div>
