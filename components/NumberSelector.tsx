@@ -93,7 +93,7 @@ const NumberSelector = ({ takenNumbers, selectedNumber, onSelect, loading = fals
           {/* Tabs (Ranges) - Only show if not searching */}
           {!searchTerm && (
               <div className="flex-shrink-0 bg-white dark:bg-black/40 border-b border-slate-200 dark:border-white/5 py-3 overflow-x-auto custom-scrollbar">
-                  <div className="flex px-6 gap-2 min-w-max">
+                  <div className="flex px-4 md:px-6 gap-2 min-w-max">
                       {loading ? (
                           [...Array(6)].map((_, i) => <Skeleton key={i} className="w-20 h-8 rounded" />)
                       ) : (
@@ -117,8 +117,8 @@ const NumberSelector = ({ takenNumbers, selectedNumber, onSelect, loading = fals
           )}
 
           {/* Grid Area */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
-              <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 pb-8">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
+              <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 md:gap-3 pb-8">
                   {loading ? (
                       Array.from({ length: 40 }).map((_, i) => (
                           <Skeleton key={i} className="h-10 w-full rounded opacity-20" />
@@ -136,7 +136,7 @@ const NumberSelector = ({ takenNumbers, selectedNumber, onSelect, loading = fals
                                       disabled={isTaken && !isSelected}
                                       onClick={() => onSelect(numStr)}
                                       className={`
-                                          relative h-12 rounded flex items-center justify-center text-xs font-mono transition-all duration-200 border group
+                                          relative h-10 md:h-12 rounded flex items-center justify-center text-xs font-mono transition-all duration-200 border group
                                           ${isSelected 
                                               ? 'bg-amber-500 border-amber-500 text-black font-bold shadow-[0_0_15px_rgba(245,158,11,0.5)] z-10 scale-110' 
                                               : isTaken 
@@ -167,7 +167,7 @@ const NumberSelector = ({ takenNumbers, selectedNumber, onSelect, loading = fals
           </div>
 
           {/* Footer Legend */}
-          <div className="p-4 bg-white dark:bg-[#080808] border-t border-slate-200 dark:border-white/5 flex justify-center gap-6 text-[9px] uppercase tracking-widest font-bold">
+          <div className="p-4 bg-white dark:bg-[#080808] border-t border-slate-200 dark:border-white/5 flex flex-wrap justify-center gap-4 md:gap-6 text-[9px] uppercase tracking-widest font-bold">
               <div className="flex items-center gap-2 text-slate-500 dark:text-gray-500">
                   <div className="w-3 h-3 rounded border border-slate-300 dark:border-white/20 bg-transparent"></div> Disponível
               </div>

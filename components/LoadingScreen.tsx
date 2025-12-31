@@ -48,7 +48,7 @@ const LoadingScreen = ({ onComplete }) => {
           <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse delay-150"></div>
       </div>
 
-      <div className="relative z-10 flex flex-col items-center">
+      <div className="relative z-10 flex flex-col items-center px-4 text-center">
         
         {/* Top Text: Organization */}
         <div className="overflow-hidden mb-6">
@@ -60,7 +60,7 @@ const LoadingScreen = ({ onComplete }) => {
         {/* Centerpiece: 2026 filling up with Gold */}
         <div className="relative mb-8">
             {/* The Text Outline/Base (Dark/Faint) */}
-            <h1 className="text-7xl md:text-9xl font-editorial font-bold text-transparent stroke-text opacity-20 tracking-tight"
+            <h1 className="text-5xl sm:text-7xl md:text-9xl font-editorial font-bold text-transparent stroke-text opacity-20 tracking-tight"
                 style={{ WebkitTextStroke: '1px rgba(255,255,255,0.3)' }}>
                 2026
             </h1>
@@ -70,7 +70,7 @@ const LoadingScreen = ({ onComplete }) => {
                 className="absolute top-0 left-0 w-full overflow-hidden flex items-end justify-center transition-all duration-100 ease-linear"
                 style={{ height: `${progress}%`, opacity: progress > 0 ? 1 : 0 }}
             >
-                 <h1 className="text-7xl md:text-9xl font-editorial font-bold text-transparent bg-clip-text bg-gradient-to-t from-amber-600 via-amber-400 to-amber-200 tracking-tight drop-shadow-[0_0_30px_rgba(212,175,55,0.6)]">
+                 <h1 className="text-5xl sm:text-7xl md:text-9xl font-editorial font-bold text-transparent bg-clip-text bg-gradient-to-t from-amber-600 via-amber-400 to-amber-200 tracking-tight drop-shadow-[0_0_30px_rgba(212,175,55,0.6)]">
                     2026
                  </h1>
             </div>

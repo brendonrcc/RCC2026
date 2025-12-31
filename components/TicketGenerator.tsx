@@ -192,7 +192,7 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
 
   // --- LUXURY LOGIN (THE CLOCK/GALA INVITATION) ---
   const renderLogin = () => (
-    <div className="w-full max-w-4xl mx-auto flex items-center justify-center min-h-[60vh] animate-in fade-in slide-in-from-bottom-8 duration-700 px-4">
+    <div className="w-full max-w-4xl mx-auto flex items-center justify-center min-h-[50vh] md:min-h-[60vh] animate-in fade-in slide-in-from-bottom-8 duration-700 px-4">
          <div className="w-full relative group perspective-1000 flex flex-col md:flex-row shadow-2xl rounded-xl md:rounded-3xl overflow-hidden bg-white dark:bg-[#0a0a0a]">
             
             {/* Left Side: The Visual (Clock Concept) - Hidden on Mobile to save space */}
@@ -214,7 +214,7 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
             </div>
 
             {/* Right Side: The Invite Form */}
-            <div className="relative w-full md:w-1/2 p-8 md:p-14 flex flex-col justify-center bg-white dark:bg-[#0a0a0a]">
+            <div className="relative w-full md:w-1/2 p-6 md:p-14 flex flex-col justify-center bg-white dark:bg-[#0a0a0a]">
                 <div className="mb-10 text-center">
                     <p className="text-[10px] uppercase tracking-[0.4em] text-amber-600 dark:text-amber-500 mb-2">Convite Oficial</p>
                     <h2 className="text-3xl font-editorial text-slate-900 dark:text-white">Confirme sua Presença</h2>
@@ -317,7 +317,7 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
             <div className="relative mb-16">
                 <div className="bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-300 dark:border-white/10 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
                     
-                    <div className="flex items-center gap-8">
+                    <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 text-center md:text-left">
                          <div className="relative w-20 h-20 flex-shrink-0">
                             <div className="absolute inset-0 rounded-full border border-dashed border-amber-500/50 animate-[spin_10s_linear_infinite]"></div>
                             <img 
@@ -340,13 +340,13 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
                          </div>
                     </div>
 
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 w-full md:w-auto justify-center">
                         <button 
                             onClick={refreshData} 
                             disabled={loadingData}
                             className="px-6 py-3 border border-slate-300 dark:border-white/10 hover:border-amber-500 hover:text-amber-700 dark:hover:text-amber-500 text-slate-700 dark:text-white transition-colors text-[10px] uppercase tracking-widest flex items-center gap-2 rounded"
                         >
-                            <Icons.Refresh /> {loadingData ? 'Sincronizando...' : 'Atualizar'}
+                            <Icons.Refresh /> {loadingData ? '...' : 'Atualizar'}
                         </button>
 
                         <button onClick={handleLogout} className="px-6 py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors text-[10px] uppercase tracking-widest rounded border border-transparent hover:border-red-200 dark:hover:border-red-800">
@@ -398,7 +398,7 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
                                 <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-amber-500/30"></div>
                                 <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-amber-500/30"></div>
 
-                                <div className="p-8 flex flex-col h-full relative z-10">
+                                <div className="p-6 md:p-8 flex flex-col h-full relative z-10">
                                     <div className="flex justify-between items-start mb-8">
                                         <div className="flex flex-col">
                                             <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 dark:text-gray-500 mb-2">Evento 00{mission.id}</span>
@@ -451,7 +451,7 @@ const TicketGenerator = ({ onGlobalRefresh }) => {
                                                 </div>
 
                                                 {/* Submission Form - Below */}
-                                                <div className="flex flex-col justify-center space-y-8 p-8 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+                                                <div className="flex flex-col justify-center space-y-8 p-6 md:p-8 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
                                                     <div>
                                                         <h4 className="text-xs text-slate-900 dark:text-white uppercase tracking-[0.2em] mb-6 font-bold flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-4">
                                                             <Icons.Lock /> Comprovações de Missão
