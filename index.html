@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MEGA DA VIRADA DA RCC - 2026</title>
+    
+    <!-- Configuração de Ambiente -->
+    <script>
+      window.process = window.process || { env: {} };
+    </script>
+    
+    <!-- Tailwind CSS (Modo CDN para desenvolvimento rápido) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              amber: { 300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }
+            },
+            animation: {
+              'spin-slow': 'spin 12s linear infinite',
+              'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'shimmer': 'shimmer 2s linear infinite',
+              'float': 'float 6s ease-in-out infinite',
+              'scan': 'scan 3s ease-in-out infinite',
+            },
+            keyframes: {
+              shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+              float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-15px)' } },
+              scan: { '0%, 100%': { top: '0%', opacity: 0 }, '50%': { top: '100%', opacity: 1 } }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Montserrat:wght@200;300;400;500;600;700&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS Global -->
+    <style>
+      :root { --c-gold: #D4AF37; }
+      body { background-color: #000; color: #e0e0e0; font-family: 'Montserrat', sans-serif; overflow-x: hidden; cursor: none; }
+      .cursor-dot, .cursor-outline { position: fixed; top: 0; left: 0; transform: translate(-50%, -50%); border-radius: 50%; z-index: 9999; pointer-events: none; }
+      .cursor-dot { width: 8px; height: 8px; background-color: var(--c-gold); }
+      .cursor-outline { width: 40px; height: 40px; border: 1px solid rgba(212, 175, 55, 0.5); transition: all 0.2s; }
+      body:has(button:hover) .cursor-outline, body:has(input:hover) .cursor-outline, body:has(.interactive-hover:hover) .cursor-outline { width: 60px; height: 60px; background-color: rgba(212, 175, 55, 0.1); border-color: var(--c-gold); mix-blend-mode: difference; }
+      .font-editorial { font-family: 'Italiana', serif; }
+      .font-ritual { font-family: 'Cinzel', serif; }
+      .text-gold-shimmer { background: linear-gradient(to right, #bf953f 20%, #fcf6ba 40%, #fcf6ba 60%, #bf953f 80%); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shine 4s linear infinite; }
+      @keyframes shine { to { background-position: 200% center; } }
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #050505; }
+      ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+      .glass-panel { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+      .holographic-hover { position: relative; overflow: hidden; }
+      .holographic-hover::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent); transform: skewX(-25deg); transition: 0.5s; pointer-events: none; }
+      .holographic-hover:hover::before { left: 150%; transition: 0.7s; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "path": "https://esm.sh/path@^0.12.7",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "url": "https://esm.sh/url@^0.11.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+    <!-- Ponto de entrada do Vite -->
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
